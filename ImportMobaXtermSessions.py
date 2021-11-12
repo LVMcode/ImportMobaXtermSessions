@@ -10,12 +10,12 @@ protocol_dict = {
 
 
 def import_mobaXterm_file():
-    global mobaXterm_file
+    session_counter = 0
     mobaXterm_file = crt.Dialog.FileOpenDialog(
-        "Please select MobaXTerm File to be imported.",
+        "Please select MobaXterm File to be imported.",
         "Open",
         "",
-        "MobaXTerm Files (*.mxtsessions)|*.mxtsessions||")
+        "MobaXterm Files (*.mxtsessions)|*.mxtsessions||")
     if mobaXterm_file == "":
         return
     with open(mobaXterm_file, 'r') as input_file:
@@ -43,8 +43,8 @@ def import_mobaXterm_file():
                 objConfig.SetOption("Hostname", hostname)
 
                 objConfig.Save()
-    crt.Dialog.MessageBox("Process completed. Imported n sessions", "Importation info")
+                session_counter += 1
+    crt.Dialog.MessageBox("Process completed. Imported {0} sessions".format(session_counter), "Import process info")
 
 
 import_mobaXterm_file()
-
