@@ -2,12 +2,19 @@
 # $interface = "1.0"
 
 import re
+import datetime
 
 protocol_dict = {
     "22": "SSH2",
     "23": "Telnet"
 }
 
+def check_session_existence(session_path):
+    try:
+        objTest = crt.OpenSessionConfiguration(session_path)
+        return True
+    except Exception:
+        return False
 
 def import_mobaXterm_file():
     session_counter = 0
@@ -34,6 +41,9 @@ def import_mobaXterm_file():
                 protocol = protocol_dict[port]
 
                 session_path = "MobaXtermSessions/" + folder_name + "/" + session_name
+                
+                if check_session_existence(session_path):
+                    session_path += "_imported_{0}".format(session_timestamp)
 
                 objConfig = crt.OpenSessionConfiguration("Default")
                 objConfig.SetOption("Protocol Name", protocol)
