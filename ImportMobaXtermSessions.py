@@ -7,9 +7,7 @@ import datetime
 protocol_dict = {
     "109": "SSH2",
     "98": "Telnet",
-    "91": "RDP",
-    "130": "FTP",
-    "140": "SFTP",
+    "91": "RDP"
 }
 
 def check_session_existence(session_path):
@@ -39,9 +37,14 @@ def import_mobaXterm_file():
                 percentage_split = info.split("%")
                 session_name = percentage_split[0].split("#")[0].rstrip("= ")
                 protocol_code = percentage_split[0].split("#")[1]
-                protocol = protocol_dict[protocol_code]
                 hostname = percentage_split[1]
                 port = int(percentage_split[2])
+
+                try:
+                    protocol = protocol_dict[protocol_code]
+                except KeyError:
+                    protocol = "SSH2"
+                    port = 22
 
                 session_path = "MobaXtermSessions/" + folder_name + "/" + session_name
 
@@ -54,6 +57,13 @@ def import_mobaXterm_file():
 
                 objConfig = crt.OpenSessionConfiguration(session_path)
                 objConfig.SetOption("Hostname", hostname)
+
+                if protocol == "SSH2":
+                    objConfig.SetOption("[SSH2] Port", port)
+                elif protocol == "Telnet":
+                    objConfig.SetOption("Port", port)
+                elif protocol == "RDP":
+                    objConfig.SetOption("Port", port)
 
                 objConfig.Save()
                 session_counter += 1
