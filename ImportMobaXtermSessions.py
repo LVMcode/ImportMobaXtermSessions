@@ -5,7 +5,7 @@ import re
 import datetime
 import string
 
-#######################################################################################
+########################################################################################################
 # GLOBAL OPTIONS
 # Set overwrite_existing_sessions to True if you wish to overwrite existing sessions
 # in case of full path name coincidences
@@ -30,13 +30,44 @@ has_trailing = True
 # no effect if has_session_log is set to False
 has_session_log = False
 default_session_log_format = "session_%S_%Y%M%D.log"
-#######################################################################################
+
+# Set has_personalized_session_name to True if you wish to have a personalized session_name
+# rather than the imported session_name
+has_personalized_session_name = False
+# Your personalized_session_name will be created with the strings inside personalized_session_name_list
+# joined with personalized_session_name_separator
+# Valid personalized_session_name_separator strings are: "_", "-", "+", " ", "", ...
+# personalized_session_name_list is a list of strings that contains keyword strings and
+# static strings
+# personalized_session_name_list keyword strings:
+# "session_name"  --->   imported session_name
+# "hostname"      --->   imported hostname
+# "port"          --->   imported port
+# "protocol"      --->   imported protocol
+# personalized_session_name_list must include at least one of this keyword strings: "session_name"
+# or "hostname"
+# personalized_session_name_list static strings are any strings included in the list that
+# aren't a keyword string
+personalized_session_name_separator = "_"
+personalized_session_name_list = ["session_name", "hostname"]
+# For instance:
+# personalized_session_name_separator = "--"
+# personalized_session_name_list = ["mySession", "hostname", "session_name", "port", "was imported"]
+# personalized_session_name could be "mySession--10.0.0.3--SW01--22--was imported"
+########################################################################################################
 
 protocol_dict = {
     "109": "SSH2",
     "98": "Telnet",
     "91": "RDP"
 }
+
+
+def check_personalized_session_name(personalized_session_name_list):
+    if "session_name" in personalized_session_name_list or "hostname" in personalized_session_name_list:
+        return True
+    else:
+        return False
 
 
 def check_session_existence(session_path):
@@ -89,6 +120,24 @@ def import_mobaXterm_file():
                 except KeyError:
                     protocol = default_protocol
                     port = default_port
+
+                if has_personalized_session_name:
+                    if check_personalized_session_name(personalized_session_name_list):
+                        session_params_dict = {"session_name": session_name, "hostname": hostname, "port": str(port), "protocol": protocol}
+                        personalized_list = []
+                        for i in personalized_session_name_list:
+                            element = session_params_dict[i] if i in session_params_dict.keys() else i
+                            personalized_list.append(element)
+                        session_name = "{0}".format(personalized_session_name_separator).join(personalized_list) \
+                            if len(personalized_session_name_list) > 1 else personalized_list[0]
+                        session_name = re.sub(r"(\\|/)+", r"", session_name)
+                    else:
+                        crt.Dialog.MessageBox("personalized_session_name_list must contain session_name or hostname "
+                                              "keyword strings.\n "
+                                              "personalized_session_name_list = {0}.\n"
+                                              "Check your script GLOBAL OPTIONS section".format(personalized_session_name_list),
+                                              "Error")
+                        return
 
                 raw_session_path = "/".join([root_import_folder + timestamp_trailing, folder_name, session_name])
                 session_path = re.sub(r"//+", r"/", raw_session_path).strip("/")
